@@ -1,36 +1,50 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
+const nodemailer = require("nodemailer");
 
 const app = express();
-
-// разрешаем JSON
 app.use(express.json());
-
-// разрешаем CORS (пока открыто, для тестового норм)
 app.use(cors());
 
-// POST endpoint формы
-app.post("/send", (req, res) => {
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+
+app.post("/send", async (req, res) => {
     const { name, phone, email, message } = req.body;
 
-    // простая проверка
-    if (!name || !phone || !email || !message) {
+    if (!name || !phone || !email) {
         return res.status(400).json({
             success: false,
-            message: "Empty fields",
+            error: "Заполните обязательные поля",
         });
     }
 
-    console.log("NEW FORM:", req.body);
+    try {
+        await transporter.sendMail({
+            from: `Form <${process.env.EMAIL_USER}>`,
+            to: process.env.EMAIL_USER,
+            subject: "Новая заявка с сайта",
+            text: `Имя: ${name}\nТелефон: ${phone}\nEmail: ${email}\nСообщение: ${message}`,
+        });
 
-    res.json({
-        success: true,
-    });
+        res.json({ success: true, message: "Письмо отправлено" });
+    } catch (error) {
+        console.error("Email error:", error);
+        res.status(500).json({
+            success: false,
+            error: "Ошибка отправки письма",
+        });
+    }
 });
 
-// ВАЖНО: порт для Render
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
-    console.log("Server started on port", PORT);
+    console.log(`Server started on port ${PORT}`);
 });
