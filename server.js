@@ -8,14 +8,26 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// НАСТРОЙКА ПОЧТЫ
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
+    family: 4,
+    connectionTimeout: 10000,
+    socketTimeout: 10000,
 });
 
+// Тестовый эндпоинт
+app.get("/health", (req, res) => {
+    res.json({ status: "ok", time: new Date().toISOString() });
+});
+
+// Эндпоинт на отправку письма
 app.post("/send", async (req, res) => {
     const { name, phone, email, message } = req.body;
 
@@ -27,24 +39,35 @@ app.post("/send", async (req, res) => {
     }
 
     try {
+        // Письмо владельцу
         await transporter.sendMail({
-            from: `Form <${process.env.EMAIL_USER}>`,
+            from: `"Form" <${process.env.EMAIL_USER}>`,
             to: process.env.EMAIL_USER,
-            subject: "Новая заявка с сайта",
-            text: `Имя: ${name}\nТелефон: ${phone}\nEmail: ${email}\nСообщение: ${message}`,
+            cc: email, // Копия пользователю (по ТЗ)
+            subject: `📨 Новая заявка: ${name}`,
+            text: `
+Имя: ${name}
+Телефон: ${phone}
+Email: ${email}
+Сообщение: ${message}
+            `.trim(),
         });
 
-        res.json({ success: true, message: "Письмо отправлено" });
+        res.json({
+            success: true,
+            message: "Заявка отправлена!",
+        });
     } catch (error) {
-        console.error("Email error:", error);
+        console.error("❌ Email error:", error.code, error.message);
+
         res.status(500).json({
             success: false,
-            error: "Ошибка отправки письма",
+            error: "Ошибка отправки",
         });
     }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
