@@ -11,15 +11,16 @@ app.use(cors());
 // НАСТРОЙКА ПОЧТЫ
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
     family: 4,
-    connectionTimeout: 10000,
-    socketTimeout: 10000,
+
+    connectionTimeout: 60000, // 60 секунд на подключение
+    socketTimeout: 60000, // 60 секунд на ожидание
 });
 
 // Тестовый эндпоинт
@@ -44,7 +45,7 @@ app.post("/send", async (req, res) => {
             from: `"Form" <${process.env.EMAIL_USER}>`,
             to: process.env.EMAIL_USER,
             cc: email, // Копия пользователю (по ТЗ)
-            subject: `📨 Новая заявка: ${name}`,
+            subject: `Новая заявка: ${name}`,
             text: `
 Имя: ${name}
 Телефон: ${phone}
