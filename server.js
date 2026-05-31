@@ -9,18 +9,32 @@ app.use(express.json());
 app.use(cors());
 
 // НАСТРОЙКА ПОЧТЫ
+const dns = require("dns");
+
+// 👇 Функция, которая возвращает только IPv4 адреса
+const lookupIPv4 = (hostname, options, callback) => {
+    dns.lookup(hostname, { family: 4, all: false }, callback);
+};
+
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    secure: false,
+    secure: false, // STARTTLS
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
-    family: 4,
 
-    connectionTimeout: 60000, // 60 секунд на подключение
-    socketTimeout: 60000, // 60 секунд на ожидание
+    // 🔥 Принудительный IPv4 через кастомный lookup
+    getaddrinfo: lookupIPv4,
+
+    // Таймауты для Render free tier
+    connectionTimeout: 30000,
+    socketTimeout: 30000,
+
+    // Отладка (удалишь потом)
+    // logger: true,
+    // debug: (data) => console.log("📧 SMTP:", data),
 });
 
 // Тестовый эндпоинт
