@@ -29,12 +29,8 @@ const transporter = nodemailer.createTransport({
     getaddrinfo: lookupIPv4,
 
     // Таймауты для Render free tier
-    connectionTimeout: 30000,
-    socketTimeout: 30000,
-
-    // Отладка (удалишь потом)
-    // logger: true,
-    // debug: (data) => console.log("📧 SMTP:", data),
+    connectionTimeout: 60000,
+    socketTimeout: 60000,
 });
 
 // Тестовый эндпоинт
